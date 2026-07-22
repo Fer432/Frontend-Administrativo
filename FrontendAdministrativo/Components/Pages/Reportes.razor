@@ -1,181 +1,92 @@
 @page "/reportes"
+@rendermode InteractiveServer
+@using FrontendAdministrativo.Models
+@inject FrontendAdministrativo.Services.UtnGolCoinApiService Api
 
 <PageTitle>Reportes</PageTitle>
 
-<div class="container-fluid">
-
-    <div class="mb-4">
-        <h1>Reportes del Sistema</h1>
-        <p class="text-muted">
-            Estadísticas generales del Mundial UTNGolMundial 2026.
-        </p>
+<div class="admin-header">
+    <div class="admin-header-title">
+        <h1>Reportes</h1>
+        <p>Estadísticas reales del sistema UTNGolCoin.</p>
     </div>
-
-    <!-- Tarjetas -->
-
-    <div class="row g-4 mb-5">
-
-        <div class="col-md-3">
-            <div class="card p-4 text-center">
-                <h6>UTNGolCoin</h6>
-                <h2>@totalCoins.ToString("N0")</h2>
-                <small class="text-muted">En circulación</small>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card p-4 text-center">
-                <h6>Partidos</h6>
-                <h2>@partidosConMasPredicciones.Count</h2>
-                <small class="text-muted">Analizados</small>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card p-4 text-center">
-                <h6>Predicciones</h6>
-                <h2>1,116</h2>
-                <small class="text-muted">Registradas</small>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card p-4 text-center">
-                <h6>Auditorías</h6>
-                <h2>@auditoria.Count</h2>
-                <small class="text-muted">Eventos</small>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Partidos -->
-
-    <div class="card p-4 mb-5">
-
-        <h3 class="mb-3"> Partidos con más predicciones</h3>
-
-        <table class="table table-hover">
-
-            <thead>
-
-                <tr>
-
-                    <th>Partido</th>
-
-                    <th class="text-center">Predicciones</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                @foreach (var item in partidosConMasPredicciones)
-                {
-                    <tr>
-
-                        <td>@item.Partido</td>
-
-                        <td class="text-center fw-bold">
-
-                            @item.NumeroPredicciones
-
-                        </td>
-
-                    </tr>
-                }
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-    <!-- Auditoría -->
-
-    <div class="card p-4">
-
-        <h3 class="mb-3">Auditoría del sistema</h3>
-
-        <table class="table table-hover">
-
-            <thead>
-
-                <tr>
-
-                    <th>Fecha</th>
-
-                    <th>Acción</th>
-
-                    <th>Detalle</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                @foreach (var evento in auditoria)
-                {
-                    <tr>
-
-                        <td>@evento.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
-
-                        <td>
-
-                            <span class="badge @AccionClase(evento.Accion)">
-
-                                @evento.Accion
-
-                            </span>
-
-                        </td>
-
-                        <td>@evento.Detalle</td>
-
-                    </tr>
-                }
-
-            </tbody>
-
-        </table>
-
-    </div>
-
 </div>
 
-@code
+@if (!string.IsNullOrWhiteSpace(mensaje))
 {
-    private long totalCoins = 1284500;
+    <div class="alert alert-@tipoMensaje mb-3" role="alert">@mensaje</div>
+}
 
-    private record PartidoPredicciones(string Partido, int NumeroPredicciones);
+@if (cargando)
+{
+    <p>Cargando reportes...</p>
+}
+else
+{
+    <div class="admin-header-stats" style="margin-bottom: 1.5rem;">
+        <div class="admin-stat">
+            <span class="admin-stat-num">@(monedas?.TotalMonedasEnCirculacion.ToString("N2") ?? "-")</span>
+            <span class="admin-stat-label">UTNGolCoin en circulación</span>
+        </div>
+        <div class="admin-stat">
+            <span class="admin-stat-num">@(monedas?.CantidadBilleteras.ToString() ?? "-")</span>
+            <span class="admin-stat-label">Billeteras</span>
+        </div>
+        <div class="admin-stat">
+            <span class="admin-stat-num">@(monedas?.TotalPagadoEnPremios.ToString("N2") ?? "-")</span>
+            <span class="admin-stat-label">Pagado en premios</span>
+        </div>
+    </div>
 
-    private List<PartidoPredicciones> partidosConMasPredicciones = new()
+    <h3>Partidos con más predicciones</h3>
+    @if (partidos.Count == 0)
     {
-        new("🇪🇨 Ecuador vs 🇧🇷 Brasil", 342),
-        new("🇦🇷 Argentina vs 🇺🇾 Uruguay", 298),
-        new("🇪🇸 España vs 🇩🇪 Alemania", 271),
-        new("🇫🇷 Francia vs Inglaterra", 205)
-    };
-
-    private record EventoAuditoria(DateTime Fecha, string Accion, string Detalle);
-
-    private List<EventoAuditoria> auditoria = new()
+        <p>No hay datos de predicciones.</p>
+    }
+    else
     {
-        new(DateTime.Now.AddHours(-5),"Creación","Se registró un nuevo partido."),
-        new(DateTime.Now.AddHours(-3),"Actualización","Se modificó un usuario."),
-        new(DateTime.Now.AddHours(-1),"Eliminación","Se eliminó una predicción.")
-    };
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Partido</th>
+                    <th>Predicciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in partidos)
+                {
+                    <tr>
+                        <td>Partido #@p.PartidoId</td>
+                        <td>@p.CantidadPredicciones</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
 
-    private string AccionClase(string accion)
+@code {
+    private MonedasCirculacionDto? monedas;
+    private List<PartidoApostadoDto> partidos = new();
+    private bool cargando = true;
+    private string mensaje = "";
+    private string tipoMensaje = "";
+
+    protected override async Task OnInitializedAsync()
     {
-        return accion switch
+        try
         {
-            "Creación" => "badge-success",
-            "Actualización" => "badge-warning",
-            "Eliminación" => "badge-danger",
-            _ => "badge-secondary"
-        };
+            monedas = await Api.ObtenerMonedasCirculacion();
+            partidos = await Api.ObtenerPartidosMasApostados(top: 5);
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"No se pudo conectar con UTNGolCoin: {ex.Message}";
+            tipoMensaje = "danger";
+        }
+        finally
+        {
+            cargando = false;
+        }
     }
 }

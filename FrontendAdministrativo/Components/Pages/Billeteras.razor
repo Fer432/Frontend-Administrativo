@@ -1,0 +1,125 @@
+﻿@page "/billeteras"
+@rendermode InteractiveServer
+@using FrontendAdministrativo.Models
+@inject FrontendAdministrativo.Services.UtnGolCoinApiService Api
+
+<PageTitle>Billeteras y Predicciones</PageTitle>
+
+<div class="admin-header">
+    <div class="admin-header-title">
+        <h1>Gestión de Usuario (UTNGolCoin)</h1>
+        <p>Consulta billetera, predicciones, transacciones y bono de un usuario.</p>
+    </div>
+</div>
+
+<div class="mb-3 d-flex align-items-end gap-2" style="max-width:400px;">
+    <div>
+        <label class="form-label">ID de usuario</label>
+        <input type="number" class="form-control" @bind="usuarioId" />
+    </div>
+    <button class="btn btn-primary" @onclick="Cargar" disabled="@cargando">Consultar</button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(mensaje))
+{
+    <div class="alert alert-@tipoMensaje">@mensaje</div>
+}
+
+@if (billetera is not null)
+{
+    <h3>Billetera</h3>
+    <p>
+        Saldo: <strong>@billetera.Saldo.ToString("0.00")</strong> UTNGolCoin
+        · Creada: @billetera.FechaCreacion.ToString("dd/MM/yyyy")
+    </p>
+}
+else if (consultado)
+{
+    <div class="alert alert-warning d-flex align-items-center gap-2">
+        Este usuario no tiene billetera.
+        <button class="btn btn-sm btn-success" @onclick="Crear">Crear billetera</button>
+    </div>
+}
+
+@if (estadoBono is not null)
+{
+    <p>
+        Bono de hoy: @(estadoBono.YaRecibioBonoHoy ? "ya recibido" : "disponible")
+        · En bancarrota: @(estadoBono.EnBancarrota ? "sí" : "no")
+    </p>
+}
+
+@if (predicciones.Count > 0)
+{
+    <h3>Predicciones</h3>
+    <table class="table">
+        <thead><tr><th>Partido</th><th>Pronóstico</th><th>Monto</th><th>Cuota</th><th>Estado</th></tr></thead>
+        <tbody>
+            @foreach (var p in predicciones)
+            {
+                <tr><td>#@p.PartidoId</td><td>@p.Pronostico</td><td>@p.Monto.ToString("0.00")</td><td>@p.Cuota</td><td>@p.Estado</td></tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (transacciones.Count > 0)
+{
+    <h3>Transacciones</h3>
+    <table class="table">
+        <thead><tr><th>Tipo</th><th>Monto</th><th>Saldo resultante</th><th>Fecha</th></tr></thead>
+        <tbody>
+            @foreach (var t in transacciones)
+            {
+                <tr><td>@t.Tipo</td><td>@t.Monto.ToString("0.00")</td><td>@t.SaldoResultante.ToString("0.00")</td><td>@t.Fecha.ToString("dd/MM/yyyy HH:mm")</td></tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private int usuarioId = 100;
+    private bool cargando = false;
+    private bool consultado = false;
+    private string mensaje = "";
+    private string tipoMensaje = "";
+
+    private BilleteraResponseDto? billetera;
+    private EstadoBonoResponseDto? estadoBono;
+    private List<PrediccionResponseDto> predicciones = new();
+    private List<TransaccionResponseDto> transacciones = new();
+
+    private async Task Cargar()
+    {
+        mensaje = ""; cargando = true; consultado = false;
+        billetera = null; estadoBono = null;
+        predicciones = new(); transacciones = new();
+        try
+        {
+            billetera = await Api.ObtenerBilletera(usuarioId);
+            estadoBono = await Api.ObtenerEstadoBono(usuarioId);
+            predicciones = await Api.ObtenerPredicciones(usuarioId);
+            transacciones = await Api.ObtenerTransacciones(usuarioId);
+            consultado = true;
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error: {ex.Message}"; tipoMensaje = "danger";
+        }
+        finally { cargando = false; }
+    }
+
+    private async Task Crear()
+    {
+        var nueva = await Api.CrearBilletera(usuarioId);
+        if (nueva is not null)
+        {
+            billetera = nueva;
+            mensaje = "Billetera creada correctamente."; tipoMensaje = "success";
+        }
+        else
+        {
+            mensaje = "No se pudo crear la billetera (¿ya existe?)."; tipoMensaje = "danger";
+        }
+    }
+}

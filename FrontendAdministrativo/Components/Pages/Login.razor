@@ -1,0 +1,78 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+@using FrontendAdministrativo.Models
+@inject FrontendAdministrativo.Services.EstadisticasApiService Api
+@inject FrontendAdministrativo.Services.SesionAdmin Sesion
+
+<PageTitle>Iniciar sesión</PageTitle>
+
+<div class="admin-header">
+    <div class="admin-header-title">
+        <h1>Iniciar sesión (Administrador)</h1>
+        <p>Ingresa tus credenciales para gestionar el sistema.</p>
+    </div>
+</div>
+
+@if (Sesion.EstaAutenticado)
+{
+    <div class="alert alert-success">
+        Sesión iniciada como <strong>@Sesion.Rol</strong>.
+        <button class="btn btn-sm btn-outline-danger ms-3" @onclick="CerrarSesion">Cerrar sesión</button>
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(mensaje))
+    {
+        <div class="alert alert-danger">@mensaje</div>
+    }
+
+    <div style="max-width: 400px;">
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input class="form-control" @bind="email" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Contraseña</label>
+            <input type="password" class="form-control" @bind="password" />
+        </div>
+        <button class="btn btn-primary" @onclick="Ingresar" disabled="@procesando">
+            @(procesando ? "Ingresando..." : "Ingresar")
+        </button>
+    </div>
+}
+
+@code {
+    private string email = "";
+    private string password = "";
+    private string mensaje = "";
+    private bool procesando = false;
+
+    private async Task Ingresar()
+    {
+        mensaje = "";
+        procesando = true;
+        try
+        {
+            var resp = await Api.Login(email, password);
+            if (resp is null)
+            {
+                mensaje = "Credenciales inválidas.";
+            }
+            else
+            {
+                Sesion.Guardar(resp.Token, resp.Rol);
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"No se pudo conectar: {ex.Message}";
+        }
+        finally
+        {
+            procesando = false;
+        }
+    }
+
+    private void CerrarSesion() => Sesion.Cerrar();
+}

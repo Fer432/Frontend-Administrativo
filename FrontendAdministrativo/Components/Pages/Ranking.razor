@@ -1,0 +1,81 @@
+﻿@page "/ranking"
+@rendermode InteractiveServer
+@using FrontendAdministrativo.Models
+@inject FrontendAdministrativo.Services.UtnGolCoinApiService Api
+
+<PageTitle>Ranking</PageTitle>
+
+<div class="admin-header">
+    <div class="admin-header-title">
+        <h1>Ranking de Usuarios (UTNGolCoin)</h1>
+        <p>Saldo, aciertos y predicciones de cada usuario.</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(mensaje))
+{
+    <div class="alert alert-@tipoMensaje mb-3" role="alert">@mensaje</div>
+}
+
+@if (cargando)
+{
+    <p>Cargando ranking...</p>
+}
+else if (ranking.Count == 0)
+{
+    <p>No hay datos de ranking.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Posición</th>
+                <th>Usuario ID</th>
+                <th>Saldo</th>
+                <th>Aciertos</th>
+                <th>Total Predicciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int pos = 1;
+            }
+            @foreach (var r in ranking)
+            {
+                <tr>
+                    <td>@pos</td>
+                    <td>@r.UsuarioId</td>
+                    <td>@r.Saldo.ToString("0.00")</td>
+                    <td>@r.Aciertos</td>
+                    <td>@r.TotalPredicciones</td>
+                </tr>
+                pos++;
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<RankingItemDto> ranking = new();
+    private bool cargando = true;
+    private string mensaje = "";
+    private string tipoMensaje = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            ranking = await Api.ObtenerRanking();
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"No se pudo conectar con UTNGolCoin: {ex.Message}";
+            tipoMensaje = "danger";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+}
