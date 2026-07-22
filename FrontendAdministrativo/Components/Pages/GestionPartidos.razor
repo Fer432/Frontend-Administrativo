@@ -3,92 +3,31 @@
 @using FrontendAdministrativo.Models
 
 <PageTitle>Gestión de Partidos</PageTitle>
-
-<div class="panel">
-    <div class="panel-header">
-        <div>
-            <h1>Gestión de Partidos</h1>
-            <p>Registra los resultados de los partidos y actualiza su estado.</p>
-        </div>
+<div class="admin-header">
+    <div class="admin-header-title">
+        <h1>Gestión de Partidos</h1>
+        <p>Administra los encuentros, registra resultados y controla su estado.</p>
     </div>
-
-    <div class="panel-card form-card">
-        <div class="form-row">
-            <div class="form-group">
-                <label for="formLocal">Local</label>
-                <input id="formLocal" type="text" class="form-input" @bind="formLocal" />
-            </div>
-            <div class="form-group">
-                <label for="formVisitante">Visitante</label>
-                <input id="formVisitante" type="text" class="form-input" @bind="formVisitante" />
-            </div>
-            <div class="form-group">
-                <label for="formFecha">Fecha</label>
-                <input id="formFecha" type="datetime-local" class="form-input" @bind="formFecha" />
-            </div>
-            <div class="form-group">
-                <label for="formSede">Sede</label>
-                <input id="formSede" type="text" class="form-input" @bind="formSede" />
-            </div>
+    <div class="admin-header-stats">
+        <div class="admin-stat">
+            <span class="admin-stat-num">@partidos.Count</span>
+            <span class="admin-stat-label">Total</span>
         </div>
-        <div class="form-actions">
-            <button class="btn-crear" @onclick="GuardarPartido">
-                @(editandoId is null ? "Crear partido" : "Guardar cambios")
-            </button>
-            @if (editandoId is not null)
-            {
-                <button class="btn-cancelar" @onclick="CancelarEdicion">Cancelar</button>
-            }
+        <div class="admin-stat">
+            <span class="admin-stat-num">@partidos.Count(p => p.Estado == "Programado")</span>
+            <span class="admin-stat-label">Programados</span>
         </div>
-    </div>
-
-    <div class="panel-card">
-        <table class="partidos-table">
-            <thead>
-                <tr>
-                    <th>Local</th>
-                    <th>Visitante</th>
-                    <th>Fecha</th>
-                    <th>Sede</th>
-                    <th class="text-center">Goles Local</th>
-                    <th class="text-center">Goles Visitante</th>
-                    <th>Estado</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var partido in partidos)
-                {
-                    <tr>
-                        <td class="team-name">@partido.Local</td>
-                        <td class="team-name">@partido.Visitante</td>
-                        <td>@partido.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
-                        <td>@partido.Sede</td>
-                        <td class="text-center">
-                            <input type="number" min="0" class="score-input"
-                                   @bind="partido.GolesLocal" />
-                        </td>
-                        <td class="text-center">
-                            <input type="number" min="0" class="score-input"
-                                   @bind="partido.GolesVisitante" />
-                        </td>
-                        <td>
-                            <span class="badge @EstadoClase(partido.Estado)">@partido.Estado</span>
-                        </td>
-                        <td class="text-center acciones-cell">
-                            <button class="btn-editar" @onclick="() => IniciarEdicion(partido)">
-                                Editar
-                            </button>
-                            <button class="btn-registrar" @onclick="() => RegistrarResultado(partido)">
-                                Registrar resultado
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <div class="admin-stat">
+            <span class="admin-stat-num">@partidos.Count(p => p.Estado == "Finalizado")</span>
+            <span class="admin-stat-label">Finalizados</span>
+        </div>
     </div>
 </div>
+
+@if (!string.IsNullOrWhiteSpace(mensaje))
+{
+    <div class="alert alert-@tipoMensaje mb-3" role="alert">@mensaje</div>
+}
 
 @code {
 
@@ -132,16 +71,28 @@
     };
 
     private string mensaje = "";
+    private string tipoMensaje = "";
 
     private int? editandoId = null;
 
     private string formLocal = "";
-
     private string formVisitante = "";
-
     private DateTime formFecha = DateTime.Now;
-
     private string formSede = "";
+
+    private void MostrarMensaje(string texto, string tipo)
+    {
+        mensaje = texto;
+
+        tipoMensaje = tipo switch
+        {
+            "success" => "success",
+            "danger" => "danger",
+            "warning" => "warning",
+            _ => "primary"
+        };
+    }
+    
 
     private void GuardarPartido()
     {
@@ -149,7 +100,10 @@
             string.IsNullOrWhiteSpace(formVisitante) ||
             string.IsNullOrWhiteSpace(formSede))
         {
-            mensaje = "Completa todos los campos.";
+            MostrarMensaje(
+                "Debe completar Local, Visitante y Sede.",
+                "warning");
+
             return;
         }
 
@@ -169,7 +123,9 @@
                 Estado = "Programado"
             });
 
-            mensaje = "Partido creado correctamente.";
+            MostrarMensaje(
+                "Partido creado correctamente.",
+                "success");
         }
         else
         {
@@ -182,7 +138,9 @@
                 partido.Fecha = formFecha;
                 partido.Sede = formSede;
 
-                mensaje = "Partido actualizado correctamente.";
+                MostrarMensaje(
+                    "Partido actualizado correctamente.",
+                    "success");
             }
         }
 
@@ -216,13 +174,18 @@
     {
         if (partido.Estado == "Finalizado")
         {
-            mensaje = "Este partido ya fue finalizado.";
+            MostrarMensaje(
+                "Este partido ya fue finalizado.",
+                "danger");
+
             return;
         }
 
         partido.Estado = "Finalizado";
 
-        mensaje = $"{partido.Local} {partido.GolesLocal} - {partido.GolesVisitante} {partido.Visitante}";
+        MostrarMensaje(
+            $"Resultado registrado: {partido.Local} {partido.GolesLocal} - {partido.GolesVisitante} {partido.Visitante}.",
+            "success");
     }
 
     private string EstadoClase(string estado)

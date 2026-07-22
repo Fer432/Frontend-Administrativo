@@ -2,18 +2,38 @@
 
 <div class="main-layout">
 
-    <header class="top-navbar">
+    <header class="top-navbar"
+            style="
+        background: linear-gradient(90deg,#0B3D91,#0057D9,#0099FF);
+        border-bottom:4px solid #FFD700;
+        box-shadow:0 6px 20px rgba(0,0,0,.20);">
+
         <NavMenu />
+
     </header>
 
     <main class="main-content">
-        @Body
+
+        <div class="content-wrapper">
+            @Body
+        </div>
+
     </main>
 
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+
+    <span>
+        Ocurrió un error inesperado en la aplicación.
+    </span>
+
+    <a href="" class="reload">
+        Recargar
+    </a>
+
+    <button class="dismiss" aria-label="Cerrar">
+        ×
+    </button>
+
 </div>

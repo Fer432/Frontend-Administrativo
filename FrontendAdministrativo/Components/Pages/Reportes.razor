@@ -5,7 +5,7 @@
 <div class="container-fluid">
 
     <div class="mb-4">
-        <h1>📊 Reportes del Sistema</h1>
+        <h1>Reportes del Sistema</h1>
         <p class="text-muted">
             Estadísticas generales del Mundial UTNGolMundial 2026.
         </p>
@@ -17,7 +17,7 @@
 
         <div class="col-md-3">
             <div class="card p-4 text-center">
-                <h6>💰 UTNGolCoin</h6>
+                <h6>UTNGolCoin</h6>
                 <h2>@totalCoins.ToString("N0")</h2>
                 <small class="text-muted">En circulación</small>
             </div>
@@ -25,7 +25,7 @@
 
         <div class="col-md-3">
             <div class="card p-4 text-center">
-                <h6>⚽ Partidos</h6>
+                <h6>Partidos</h6>
                 <h2>@partidosConMasPredicciones.Count</h2>
                 <small class="text-muted">Analizados</small>
             </div>
@@ -33,7 +33,7 @@
 
         <div class="col-md-3">
             <div class="card p-4 text-center">
-                <h6>📈 Predicciones</h6>
+                <h6>Predicciones</h6>
                 <h2>1,116</h2>
                 <small class="text-muted">Registradas</small>
             </div>
@@ -41,7 +41,7 @@
 
         <div class="col-md-3">
             <div class="card p-4 text-center">
-                <h6>📝 Auditorías</h6>
+                <h6>Auditorías</h6>
                 <h2>@auditoria.Count</h2>
                 <small class="text-muted">Eventos</small>
             </div>
@@ -53,7 +53,7 @@
 
     <div class="card p-4 mb-5">
 
-        <h3 class="mb-3">🏆 Partidos con más predicciones</h3>
+        <h3 class="mb-3"> Partidos con más predicciones</h3>
 
         <table class="table table-hover">
 
@@ -96,7 +96,7 @@
 
     <div class="card p-4">
 
-        <h3 class="mb-3">📋 Auditoría del sistema</h3>
+        <h3 class="mb-3">Auditoría del sistema</h3>
 
         <table class="table table-hover">
 
@@ -145,52 +145,37 @@
 
 </div>
 
-    @code {
+@code
+{
+    private long totalCoins = 1284500;
 
-        private long totalCoins = 1_284_500;
+    private record PartidoPredicciones(string Partido, int NumeroPredicciones);
 
-        private record PartidoPredicciones(string Partido, int NumeroPredicciones);
-
-        private List<PartidoPredicciones> partidosConMasPredicciones = new()
+    private List<PartidoPredicciones> partidosConMasPredicciones = new()
     {
         new("🇪🇨 Ecuador vs 🇧🇷 Brasil", 342),
         new("🇦🇷 Argentina vs 🇺🇾 Uruguay", 298),
         new("🇪🇸 España vs 🇩🇪 Alemania", 271),
-        new("🇫🇷 Francia vs 🏴 Inglaterra", 205)
+        new("🇫🇷 Francia vs Inglaterra", 205)
     };
 
-        private record EventoAuditoria(
-            DateTime Fecha,
-            string Accion,
-            string Detalle);
+    private record EventoAuditoria(DateTime Fecha, string Accion, string Detalle);
 
-        private List<EventoAuditoria> auditoria = new()
+    private List<EventoAuditoria> auditoria = new()
     {
-        new(DateTime.Now.AddHours(-2),
-            "Registro de resultado",
-            "Ecuador 2 - 1 Brasil"),
-
-        new(DateTime.Now.AddHours(-5),
-            "Cambio de rol",
-            "María López fue promovida a Administrador"),
-
-        new(DateTime.Now.AddDays(-1),
-            "Registro de resultado",
-            "Argentina 1 - 1 Uruguay"),
-
-        new(DateTime.Now.AddDays(-2),
-            "Cambio de rol",
-            "Carlos Pérez pasó a Usuario")
+        new(DateTime.Now.AddHours(-5),"Creación","Se registró un nuevo partido."),
+        new(DateTime.Now.AddHours(-3),"Actualización","Se modificó un usuario."),
+        new(DateTime.Now.AddHours(-1),"Eliminación","Se eliminó una predicción.")
     };
 
-        private string AccionClase(string accion)
+    private string AccionClase(string accion)
+    {
+        return accion switch
         {
-            return accion switch
-            {
-                "Registro de resultado" => "badge-success",
-                "Cambio de rol" => "badge-warning",
-                _ => "badge-danger"
-            };
-        }
-
+            "Creación" => "badge-success",
+            "Actualización" => "badge-warning",
+            "Eliminación" => "badge-danger",
+            _ => "badge-secondary"
+        };
     }
+}
