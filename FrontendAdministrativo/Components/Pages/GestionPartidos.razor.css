@@ -30,6 +30,90 @@
     overflow-x: auto;
 }
 
+.form-card {
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    overflow: visible;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex: 1 1 200px;
+}
+
+.form-group label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #4a5a7a;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.form-input {
+    padding: 0.5rem 0.65rem;
+    border: 1px solid #d6e0f2;
+    border-radius: 6px;
+    background: #fbfcff;
+    color: #2b3a55;
+    font-size: 0.9rem;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #a9c6f2;
+    box-shadow: 0 0 0 3px rgba(169, 198, 242, 0.35);
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-crear {
+    background: #2b6cb0;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.btn-crear:hover {
+    background: #24588f;
+}
+
+.btn-crear:active {
+    background: #1e4a78;
+}
+
+.btn-cancelar {
+    background: #eef1f8;
+    color: #5b6b8c;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.btn-cancelar:hover {
+    background: #dfe4f0;
+}
+
 .partidos-table {
     width: 100%;
     border-collapse: collapse;
@@ -131,4 +215,30 @@
 
 .btn-registrar:active {
     background: #7fa9e0;
+}
+
+.acciones-cell {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.btn-editar {
+    background: #eef1f8;
+    color: #4a5a7a;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.btn-editar:hover {
+    background: #dfe4f0;
+}
+
+.btn-editar:active {
+    background: #cfd6e8;
 }

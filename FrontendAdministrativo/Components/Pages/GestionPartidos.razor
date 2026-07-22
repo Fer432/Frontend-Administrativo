@@ -12,6 +12,36 @@
         </div>
     </div>
 
+    <div class="panel-card form-card">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="formLocal">Local</label>
+                <input id="formLocal" type="text" class="form-input" @bind="formLocal" />
+            </div>
+            <div class="form-group">
+                <label for="formVisitante">Visitante</label>
+                <input id="formVisitante" type="text" class="form-input" @bind="formVisitante" />
+            </div>
+            <div class="form-group">
+                <label for="formFecha">Fecha</label>
+                <input id="formFecha" type="datetime-local" class="form-input" @bind="formFecha" />
+            </div>
+            <div class="form-group">
+                <label for="formSede">Sede</label>
+                <input id="formSede" type="text" class="form-input" @bind="formSede" />
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn-crear" @onclick="GuardarPartido">
+                @(editandoId is null ? "Crear partido" : "Guardar cambios")
+            </button>
+            @if (editandoId is not null)
+            {
+                <button class="btn-cancelar" @onclick="CancelarEdicion">Cancelar</button>
+            }
+        </div>
+    </div>
+
     <div class="panel-card">
         <table class="partidos-table">
             <thead>
@@ -19,6 +49,7 @@
                     <th>Local</th>
                     <th>Visitante</th>
                     <th>Fecha</th>
+                    <th>Sede</th>
                     <th class="text-center">Goles Local</th>
                     <th class="text-center">Goles Visitante</th>
                     <th>Estado</th>
@@ -32,6 +63,7 @@
                         <td class="team-name">@partido.Local</td>
                         <td class="team-name">@partido.Visitante</td>
                         <td>@partido.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@partido.Sede</td>
                         <td class="text-center">
                             <input type="number" min="0" class="score-input"
                                    @bind="partido.GolesLocal" />
@@ -43,7 +75,10 @@
                         <td>
                             <span class="badge @EstadoClase(partido.Estado)">@partido.Estado</span>
                         </td>
-                        <td class="text-center">
+                        <td class="text-center acciones-cell">
+                            <button class="btn-editar" @onclick="() => IniciarEdicion(partido)">
+                                Editar
+                            </button>
                             <button class="btn-registrar" @onclick="() => RegistrarResultado(partido)">
                                 Registrar resultado
                             </button>
@@ -58,13 +93,82 @@
 @code {
     private List<Partido> partidos = new()
     {
-        new Partido { Id = 1, Local = "Deportivo Norte", Visitante = "Atlético Sur", Fecha = new DateTime(2026, 7, 22, 18, 0, 0), GolesLocal = 0, GolesVisitante = 0, Estado = "Programado" },
-        new Partido { Id = 2, Local = "Real Central", Visitante = "Unión Costa", Fecha = new DateTime(2026, 7, 23, 20, 30, 0), GolesLocal = 0, GolesVisitante = 0, Estado = "Programado" },
-        new Partido { Id = 3, Local = "Estrella Azul", Visitante = "Club Andino", Fecha = new DateTime(2026, 7, 20, 16, 0, 0), GolesLocal = 2, GolesVisitante = 1, Estado = "Finalizado" },
-        new Partido { Id = 4, Local = "Ciudad Nueva", Visitante = "Los Halcones", Fecha = new DateTime(2026, 7, 24, 19, 0, 0), GolesLocal = 0, GolesVisitante = 0, Estado = "Programado" },
+        new Partido { Id = 1, Local = "Deportivo Norte", Visitante = "Atlético Sur", Fecha = new DateTime(2026, 7, 22, 18, 0, 0), Sede = "Estadio Norte", GolesLocal = 0, GolesVisitante = 0, Estado = "Programado" },
+        new Partido { Id = 2, Local = "Real Central", Visitante = "Unión Costa", Fecha = new DateTime(2026, 7, 23, 20, 30, 0), Sede = "Estadio Central", GolesLocal = 0, GolesVisitante = 0, Estado = "Programado" },
+        new Partido { Id = 3, Local = "Estrella Azul", Visitante = "Club Andino", Fecha = new DateTime(2026, 7, 20, 16, 0, 0), Sede = "Estadio Andino", GolesLocal = 2, GolesVisitante = 1, Estado = "Finalizado" },
+        new Partido { Id = 4, Local = "Ciudad Nueva", Visitante = "Los Halcones", Fecha = new DateTime(2026, 7, 24, 19, 0, 0), Sede = "Estadio Nuevo", GolesLocal = 0, GolesVisitante = 0, Estado = "Programado" },
     };
 
     private string mensaje = "";
+
+    private int? editandoId = null;
+    private string formLocal = "";
+    private string formVisitante = "";
+    private DateTime formFecha = DateTime.Now;
+    private string formSede = "";
+
+    private void GuardarPartido()
+    {
+        if (string.IsNullOrWhiteSpace(formLocal) || string.IsNullOrWhiteSpace(formVisitante) || string.IsNullOrWhiteSpace(formSede))
+        {
+            mensaje = "Completa Local, Visitante y Sede antes de guardar.";
+            return;
+        }
+
+        if (editandoId is null)
+        {
+            var nuevoId = partidos.Count == 0 ? 1 : partidos.Max(p => p.Id) + 1;
+            partidos.Add(new Partido
+            {
+                Id = nuevoId,
+                Local = formLocal,
+                Visitante = formVisitante,
+                Fecha = formFecha,
+                Sede = formSede,
+                GolesLocal = 0,
+                GolesVisitante = 0,
+                Estado = "Programado"
+            });
+            mensaje = $"Partido {formLocal} vs {formVisitante} creado.";
+        }
+        else
+        {
+            var partido = partidos.FirstOrDefault(p => p.Id == editandoId);
+            if (partido is not null)
+            {
+                partido.Local = formLocal;
+                partido.Visitante = formVisitante;
+                partido.Fecha = formFecha;
+                partido.Sede = formSede;
+                mensaje = $"Partido {partido.Local} vs {partido.Visitante} actualizado.";
+            }
+        }
+
+        LimpiarFormulario();
+    }
+
+    private void IniciarEdicion(Partido partido)
+    {
+        editandoId = partido.Id;
+        formLocal = partido.Local;
+        formVisitante = partido.Visitante;
+        formFecha = partido.Fecha;
+        formSede = partido.Sede;
+    }
+
+    private void CancelarEdicion()
+    {
+        LimpiarFormulario();
+    }
+
+    private void LimpiarFormulario()
+    {
+        editandoId = null;
+        formLocal = "";
+        formVisitante = "";
+        formFecha = DateTime.Now;
+        formSede = "";
+    }
 
     private void RegistrarResultado(Partido partido)
     {
