@@ -1,0 +1,86 @@
+@page "/gestion-partidos"
+@rendermode InteractiveServer
+@using FrontendAdministrativo.Models
+
+<PageTitle>Gestión de Partidos</PageTitle>
+
+<div class="panel">
+    <div class="panel-header">
+        <div>
+            <h1>Gestión de Partidos</h1>
+            <p>Registra los resultados de los partidos y actualiza su estado.</p>
+        </div>
+    </div>
+
+    <div class="panel-card">
+        <table class="partidos-table">
+            <thead>
+                <tr>
+                    <th>Local</th>
+                    <th>Visitante</th>
+                    <th>Fecha</th>
+                    <th class="text-center">Goles Local</th>
+                    <th class="text-center">Goles Visitante</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var partido in partidos)
+                {
+                    <tr>
+                        <td class="team-name">@partido.Local</td>
+                        <td class="team-name">@partido.Visitante</td>
+                        <td>@partido.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-center">
+                            <input type="number" min="0" class="score-input"
+                                   @bind="partido.GolesLocal" />
+                        </td>
+                        <td class="text-center">
+                            <input type="number" min="0" class="score-input"
+                                   @bind="partido.GolesVisitante" />
+                        </td>
+                        <td>
+                            <span class="badge @EstadoClase(partido.Estado)">@partido.Estado</span>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn-registrar" @onclick="() => RegistrarResultado(partido)">
+                                Registrar resultado
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<Partido> partidos = new()
+    {
+        new Partido { Id = 1, Local = "Deportivo Norte", Visitante = "Atlético Sur", Fecha = new DateTime(2026, 7, 22, 18, 0, 0), GolesLocal = 0, GolesVisitante = 0, Estado = "Programado" },
+        new Partido { Id = 2, Local = "Real Central", Visitante = "Unión Costa", Fecha = new DateTime(2026, 7, 23, 20, 30, 0), GolesLocal = 0, GolesVisitante = 0, Estado = "Programado" },
+        new Partido { Id = 3, Local = "Estrella Azul", Visitante = "Club Andino", Fecha = new DateTime(2026, 7, 20, 16, 0, 0), GolesLocal = 2, GolesVisitante = 1, Estado = "Finalizado" },
+        new Partido { Id = 4, Local = "Ciudad Nueva", Visitante = "Los Halcones", Fecha = new DateTime(2026, 7, 24, 19, 0, 0), GolesLocal = 0, GolesVisitante = 0, Estado = "Programado" },
+    };
+
+    private string mensaje = "";
+
+    private void RegistrarResultado(Partido partido)
+    {
+        if (partido.Estado == "Finalizado")
+        {
+            mensaje = $"El partido {partido.Local} vs {partido.Visitante} ya tiene resultado registrado.";
+            return;
+        }
+
+        partido.Estado = "Finalizado";
+        mensaje = $"Resultado registrado: {partido.Local} {partido.GolesLocal} - {partido.GolesVisitante} {partido.Visitante}.";
+    }
+    private string EstadoClase(string estado) => estado switch
+    {
+        "Finalizado" => "badge-finalizado",
+        "En curso" => "badge-en-curso",
+        _ => "badge-programado"
+    };
+}
