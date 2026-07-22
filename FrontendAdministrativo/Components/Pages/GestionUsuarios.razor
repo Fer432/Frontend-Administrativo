@@ -1,0 +1,86 @@
+@page "/gestion-usuarios"
+@rendermode InteractiveServer
+@using FrontendAdministrativo.Models
+
+<PageTitle>Gestión de Usuarios</PageTitle>
+
+<div class="panel">
+    <div class="panel-header">
+        <div>
+            <h1>Gestión de Usuarios</h1>
+            <p>Administra los roles asignados a cada usuario.</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensaje))
+    {
+        <div class="mensaje-confirmacion">@mensaje</div>
+    }
+
+    <div class="panel-card">
+        <table class="usuarios-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Rol actual</th>
+                    <th>Nuevo rol</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var usuario in usuarios)
+                {
+                    <tr>
+                        <td class="user-name">@usuario.Nombre</td>
+                        <td>
+                            <span class="badge @RolClase(usuario.Rol)">@usuario.Rol</span>
+                        </td>
+                        <td>
+                            <select class="rol-select" @bind="rolSeleccionado[usuario.Id]">
+                                <option value="Administrador">Administrador</option>
+                                <option value="Usuario">Usuario</option>
+                                <option value="Invitado">Invitado</option>
+                            </select>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn-guardar" @onclick="() => GuardarRol(usuario)">
+                                Guardar rol
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<Usuario> usuarios = new()
+    {
+        new Usuario { Id = 1, Nombre = "Ana Torres", Rol = "Administrador" },
+        new Usuario { Id = 2, Nombre = "Luis Méndez", Rol = "Usuario" },
+        new Usuario { Id = 3, Nombre = "Carla Ruiz", Rol = "Invitado" },
+        new Usuario { Id = 4, Nombre = "Jorge Salas", Rol = "Usuario" },
+    };
+
+    private Dictionary<int, string> rolSeleccionado = new();
+    private string mensaje = "";
+
+    protected override void OnInitialized()
+    {
+        rolSeleccionado = usuarios.ToDictionary(u => u.Id, u => u.Rol);
+    }
+
+    private void GuardarRol(Usuario usuario)
+    {
+        usuario.Rol = rolSeleccionado[usuario.Id];
+        mensaje = $"Rol de {usuario.Nombre} actualizado a {usuario.Rol}.";
+    }
+
+    private string RolClase(string rol) => rol switch
+    {
+        "Administrador" => "badge-administrador",
+        "Invitado" => "badge-invitado",
+        _ => "badge-usuario"
+    };
+}
