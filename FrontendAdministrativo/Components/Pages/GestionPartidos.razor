@@ -91,33 +91,72 @@
 </div>
 
 @code {
+
     private List<Partido> partidos = new()
     {
-        new Partido { Id = 1, Local = "Deportivo Norte", Visitante = "Atlético Sur", Fecha = new DateTime(2026, 7, 22, 18, 0, 0), Sede = "Estadio Norte", GolesLocal = 0, GolesVisitante = 0, Estado = "Programado" },
-        new Partido { Id = 2, Local = "Real Central", Visitante = "Unión Costa", Fecha = new DateTime(2026, 7, 23, 20, 30, 0), Sede = "Estadio Central", GolesLocal = 0, GolesVisitante = 0, Estado = "Programado" },
-        new Partido { Id = 3, Local = "Estrella Azul", Visitante = "Club Andino", Fecha = new DateTime(2026, 7, 20, 16, 0, 0), Sede = "Estadio Andino", GolesLocal = 2, GolesVisitante = 1, Estado = "Finalizado" },
-        new Partido { Id = 4, Local = "Ciudad Nueva", Visitante = "Los Halcones", Fecha = new DateTime(2026, 7, 24, 19, 0, 0), Sede = "Estadio Nuevo", GolesLocal = 0, GolesVisitante = 0, Estado = "Programado" },
+        new Partido
+        {
+            Id = 1,
+            Local = "🇪🇨 Ecuador",
+            Visitante = "🇧🇷 Brasil",
+            Fecha = new DateTime(2026, 7, 22, 18, 0, 0),
+            Sede = "MetLife Stadium",
+            GolesLocal = 0,
+            GolesVisitante = 0,
+            Estado = "Programado"
+        },
+
+        new Partido
+        {
+            Id = 2,
+            Local = "🇦🇷 Argentina",
+            Visitante = "🇺🇾 Uruguay",
+            Fecha = new DateTime(2026, 7, 23, 20, 30, 0),
+            Sede = "Estadio Azteca",
+            GolesLocal = 0,
+            GolesVisitante = 0,
+            Estado = "Programado"
+        },
+
+        new Partido
+        {
+            Id = 3,
+            Local = "🇪🇸 España",
+            Visitante = "🇩🇪 Alemania",
+            Fecha = new DateTime(2026, 7, 20, 16, 0, 0),
+            Sede = "SoFi Stadium",
+            GolesLocal = 2,
+            GolesVisitante = 1,
+            Estado = "Finalizado"
+        }
     };
 
     private string mensaje = "";
 
     private int? editandoId = null;
+
     private string formLocal = "";
+
     private string formVisitante = "";
+
     private DateTime formFecha = DateTime.Now;
+
     private string formSede = "";
 
     private void GuardarPartido()
     {
-        if (string.IsNullOrWhiteSpace(formLocal) || string.IsNullOrWhiteSpace(formVisitante) || string.IsNullOrWhiteSpace(formSede))
+        if (string.IsNullOrWhiteSpace(formLocal) ||
+            string.IsNullOrWhiteSpace(formVisitante) ||
+            string.IsNullOrWhiteSpace(formSede))
         {
-            mensaje = "Completa Local, Visitante y Sede antes de guardar.";
+            mensaje = "Completa todos los campos.";
             return;
         }
 
         if (editandoId is null)
         {
-            var nuevoId = partidos.Count == 0 ? 1 : partidos.Max(p => p.Id) + 1;
+            int nuevoId = partidos.Any() ? partidos.Max(p => p.Id) + 1 : 1;
+
             partidos.Add(new Partido
             {
                 Id = nuevoId,
@@ -129,18 +168,21 @@
                 GolesVisitante = 0,
                 Estado = "Programado"
             });
-            mensaje = $"Partido {formLocal} vs {formVisitante} creado.";
+
+            mensaje = "Partido creado correctamente.";
         }
         else
         {
             var partido = partidos.FirstOrDefault(p => p.Id == editandoId);
-            if (partido is not null)
+
+            if (partido != null)
             {
                 partido.Local = formLocal;
                 partido.Visitante = formVisitante;
                 partido.Fecha = formFecha;
                 partido.Sede = formSede;
-                mensaje = $"Partido {partido.Local} vs {partido.Visitante} actualizado.";
+
+                mensaje = "Partido actualizado correctamente.";
             }
         }
 
@@ -174,17 +216,23 @@
     {
         if (partido.Estado == "Finalizado")
         {
-            mensaje = $"El partido {partido.Local} vs {partido.Visitante} ya tiene resultado registrado.";
+            mensaje = "Este partido ya fue finalizado.";
             return;
         }
 
         partido.Estado = "Finalizado";
-        mensaje = $"Resultado registrado: {partido.Local} {partido.GolesLocal} - {partido.GolesVisitante} {partido.Visitante}.";
+
+        mensaje = $"{partido.Local} {partido.GolesLocal} - {partido.GolesVisitante} {partido.Visitante}";
     }
-    private string EstadoClase(string estado) => estado switch
+
+    private string EstadoClase(string estado)
     {
-        "Finalizado" => "badge-finalizado",
-        "En curso" => "badge-en-curso",
-        _ => "badge-programado"
-    };
+        return estado switch
+        {
+            "Finalizado" => "badge-finalizado",
+            "En curso" => "badge-en-curso",
+            _ => "badge-programado"
+        };
+    }
+
 }

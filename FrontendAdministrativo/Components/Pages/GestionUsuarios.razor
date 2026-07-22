@@ -55,15 +55,40 @@
 </div>
 
 @code {
+
     private List<Usuario> usuarios = new()
     {
-        new Usuario { Id = 1, Nombre = "Ana Torres", Rol = "Administrador" },
-        new Usuario { Id = 2, Nombre = "Luis Méndez", Rol = "Usuario" },
-        new Usuario { Id = 3, Nombre = "Carla Ruiz", Rol = "Invitado" },
-        new Usuario { Id = 4, Nombre = "Jorge Salas", Rol = "Usuario" },
+        new Usuario
+        {
+            Id = 1,
+            Nombre = "Jonathan Sánchez",
+            Rol = "Administrador"
+        },
+
+        new Usuario
+        {
+            Id = 2,
+            Nombre = "María López",
+            Rol = "Usuario"
+        },
+
+        new Usuario
+        {
+            Id = 3,
+            Nombre = "Carlos Pérez",
+            Rol = "Usuario"
+        },
+
+        new Usuario
+        {
+            Id = 4,
+            Nombre = "Andrea García",
+            Rol = "Invitado"
+        }
     };
 
     private Dictionary<int, string> rolSeleccionado = new();
+
     private string mensaje = "";
 
     protected override void OnInitialized()
@@ -73,14 +98,26 @@
 
     private void GuardarRol(Usuario usuario)
     {
+        if (!rolSeleccionado.ContainsKey(usuario.Id))
+        {
+            mensaje = "No se pudo actualizar el rol.";
+            return;
+        }
+
         usuario.Rol = rolSeleccionado[usuario.Id];
-        mensaje = $"Rol de {usuario.Nombre} actualizado a {usuario.Rol}.";
+
+        mensaje = $"El rol de {usuario.Nombre} fue actualizado correctamente a {usuario.Rol}.";
     }
 
-    private string RolClase(string rol) => rol switch
+    private string RolClase(string rol)
     {
-        "Administrador" => "badge-administrador",
-        "Invitado" => "badge-invitado",
-        _ => "badge-usuario"
-    };
+        return rol switch
+        {
+            "Administrador" => "badge-administrador",
+            "Usuario" => "badge-usuario",
+            "Invitado" => "badge-invitado",
+            _ => "badge-usuario"
+        };
+    }
+
 }
