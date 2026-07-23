@@ -108,6 +108,7 @@
             <th>Fase</th>
             @if (Sesion.EstaAutenticado)
             {
+                <th>Resultado</th>  @* NUEVO: columna para los goles *@
                 <th>Acciones</th>
             }
         </tr>
@@ -124,6 +125,15 @@
                 <td>@p.Fase</td>
                 @if (Sesion.EstaAutenticado)
                 {
+                    @* NUEVO: campos de goles y botón de registrar resultado *@
+                    <td>
+                        <input type="number" min="0" style="width:50px" @bind="golesLocalInput[p.IdPartido]" />
+                        -
+                        <input type="number" min="0" style="width:50px" @bind="golesVisitanteInput[p.IdPartido]" />
+                        <button class="btn btn-sm btn-primary" @onclick="() => RegistrarResultado(p)">
+                            Guardar resultado
+                        </button>
+                    </td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary" @onclick="() => Editar(p)">Editar</button>
                         <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(p.IdPartido)">Eliminar</button>
@@ -142,6 +152,10 @@
     private PartidoEntityDto form = new() { Fecha = DateTime.Now };
     private int idLocal = 0, idVisitante = 0, idSede = 0;
 
+    // NUEVO: diccionarios para guardar los goles de cada partido por su Id
+    private Dictionary<int, int> golesLocalInput = new();
+    private Dictionary<int, int> golesVisitanteInput = new();
+
     private string mensaje = "", tipoMensaje = "";
 
     protected override async Task OnInitializedAsync() => await CargarTodo();
@@ -153,8 +167,37 @@
             partidos = await Api.ListarPartidos();
             selecciones = await Api.ListarSelecciones();
             sedes = await Api.ListarSedes();
+
+            // Inicializar los diccionarios de goles
+            golesLocalInput.Clear();
+            golesVisitanteInput.Clear();
+
+            foreach (var p in partidos)
+            {
+                golesLocalInput[p.IdPartido] = 0;
+                golesVisitanteInput[p.IdPartido] = 0;
+            }
         }
-        catch (Exception ex) { mensaje = $"Error: {ex.Message}"; tipoMensaje = "danger"; }
+        catch (Exception ex)
+        {
+            mensaje = $"Error: {ex.Message}";
+            tipoMensaje = "danger";
+        }
+    }
+
+    // NUEVO: método para registrar el resultado (goles) vía el backend
+    private async Task RegistrarResultado(PartidoDto p)
+    {
+        var dto = new ResultadoDto
+        {
+            Partido = new PartidoRef { IdPartido = p.IdPartido },
+            GolesLocal = golesLocalInput.GetValueOrDefault(p.IdPartido),
+            GolesVisitante = golesVisitanteInput.GetValueOrDefault(p.IdPartido)
+        };
+
+        var ok = await Api.RegistrarResultado(dto);
+        mensaje = ok ? $"Resultado registrado para el partido #{p.IdPartido}." : "No se pudo registrar el resultado.";
+        tipoMensaje = ok ? "success" : "danger";
     }
 
     private async Task Guardar()

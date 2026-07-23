@@ -99,4 +99,10 @@ public class EstadisticasApiService
         var resp = await _http.DeleteAsync($"partidos/{id}");
         return resp.IsSuccessStatusCode ? (true, null) : (false, await resp.Content.ReadAsStringAsync());
     }
+    public async Task<bool> RegistrarResultado(ResultadoDto resultado)
+    {
+        Autenticar();
+        var resp = await _http.PostAsJsonAsync("resultados", resultado);
+        return resp.IsSuccessStatusCode;
+    }
 }
