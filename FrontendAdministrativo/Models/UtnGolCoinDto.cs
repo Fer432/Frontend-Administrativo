@@ -55,3 +55,15 @@ public class EstadoBonoResponseDto
     public bool YaRecibioBonoHoy { get; set; }
     public DateOnly Fecha { get; set; }
 }
+public class BeneficiarioBonoDto
+{
+    public int UsuarioId { get; set; }
+    public decimal SaldoNuevo { get; set; }
+}
+
+public class EjecutarBonoDiarioResponseDto
+{
+    public DateOnly Fecha { get; set; }
+    public int CantidadBeneficiados { get; set; }
+    public List<BeneficiarioBonoDto> Beneficiarios { get; set; } = new();
+}

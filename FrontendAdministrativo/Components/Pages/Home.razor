@@ -1,60 +1,74 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@using FrontendAdministrativo.Models
+@inject FrontendAdministrativo.Services.EstadisticasApiService ApiEst
+@inject FrontendAdministrativo.Services.UtnGolCoinApiService ApiCoin
 
 <PageTitle>Inicio</PageTitle>
 
 <div class="panel">
 
     <div class="panel-header mundial-header">
-
         <div>
             <h1>Panel Administrativo</h1>
-            <p>
-                Administra el Mundial 2026 y controla toda la plataforma
-                UTNGolMundial.
-            </p>
+            <p>Administra el Mundial 2026 y controla toda la plataforma UTNGolMundial.</p>
         </div>
-
-        <div class="logo-mundial">
-            FIFA 2026
-        </div>
-
+        <div class="logo-mundial">FIFA 2026</div>
     </div>
 
     <div class="stats-grid">
-
         <div class="stat-card total">
-            <h2>104</h2>
+            <h2>@totalPartidos</h2>
             <p>Partidos</p>
         </div>
-
         <div class="stat-card admin">
-            <h2>352</h2>
-            <p>Usuarios</p>
+            <h2>@totalSelecciones</h2>
+            <p>Selecciones</p>
         </div>
-
         <div class="stat-card usuario">
-            <h2>1.284.500</h2>
-            <p>UTNGolCoin</p>
+            <h2>@monedas.ToString("N2")</h2>
+            <p>UTNGolCoin en circulación</p>
         </div>
-
         <div class="stat-card invitado">
-            <h2>18.540</h2>
-            <p>Predicciones</p>
+            <h2>@totalBilleteras</h2>
+            <p>Billeteras</p>
         </div>
-
     </div>
 
     <div class="panel-card">
-
         <h3>Bienvenido al Panel</h3>
-
         <p>
-            Desde este panel podrás gestionar partidos,
-            administrar usuarios,
-            registrar resultados oficiales y consultar
-            reportes del Mundial 2026.
+            Desde este panel podrás consultar los partidos del Mundial 2026,
+            gestionar selecciones, registrar predicciones y consultar
+            reportes del sistema UTNGolCoin.
         </p>
-
     </div>
 
 </div>
+
+@code {
+    private int totalPartidos = 0;
+    private int totalSelecciones = 0;
+    private decimal monedas = 0;
+    private int totalBilleteras = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            totalPartidos = (await ApiEst.ListarPartidos()).Count;
+            totalSelecciones = (await ApiEst.ListarSelecciones()).Count;
+
+            var rep = await ApiCoin.ObtenerMonedasCirculacion();
+            if (rep is not null)
+            {
+                monedas = rep.TotalMonedasEnCirculacion;
+                totalBilleteras = rep.CantidadBilleteras;
+            }
+        }
+        catch
+        {
+            // Si algún backend está apagado, las tarjetas quedan en 0.
+        }
+    }
+}

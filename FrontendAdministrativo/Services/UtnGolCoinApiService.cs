@@ -44,7 +44,12 @@ public class UtnGolCoinApiService
         var texto = await resp.Content.ReadAsStringAsync();
         return (false, texto);
     }
-
+    public async Task<EjecutarBonoDiarioResponseDto?> EjecutarBonoDiario()
+    {
+        var resp = await _http.PostAsJsonAsync("bonos/ejecutar-bono-diario", new { });
+        if (!resp.IsSuccessStatusCode) return null;
+        return await resp.Content.ReadFromJsonAsync<EjecutarBonoDiarioResponseDto>();
+    }
     public async Task<List<PrediccionResponseDto>> ObtenerPredicciones(int usuarioId)
         => await _http.GetFromJsonAsync<List<PrediccionResponseDto>>($"predicciones/usuario/{usuarioId}") ?? new();
 

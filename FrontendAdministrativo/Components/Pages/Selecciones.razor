@@ -1,0 +1,104 @@
+﻿@page "/selecciones"
+@rendermode InteractiveServer
+@using FrontendAdministrativo.Models
+@inject FrontendAdministrativo.Services.EstadisticasApiService Api
+@inject FrontendAdministrativo.Services.SesionAdmin Sesion
+
+<PageTitle>Selecciones</PageTitle>
+
+<div class="admin-header">
+    <div class="admin-header-title">
+        <h1>Gestión de Selecciones</h1>
+        <p>Equipos participantes del Mundial.</p>
+    </div>
+</div>
+
+@if (!Sesion.EstaAutenticado)
+{
+    <div class="alert alert-warning">
+        Estás en modo consulta. Inicia sesión como administrador para crear, editar o eliminar.
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(mensaje))
+{
+    <div class="alert alert-@tipoMensaje">@mensaje</div>
+}
+
+<div class="row mb-4" style="max-width:700px;">
+    <div class="col"><input class="form-control" placeholder="Nombre" @bind="form.Nombre" /></div>
+    <div class="col"><input class="form-control" placeholder="Confederación" @bind="form.Confederacion" /></div>
+    <div class="col"><input type="number" class="form-control" placeholder="ID Grupo" @bind="idGrupo" /></div>
+    <div class="col-auto">
+        <button class="btn btn-primary" @onclick="Guardar" disabled="@(!Sesion.EstaAutenticado)">
+            @(form.IdSeleccion == 0 ? "Crear" : "Actualizar")
+        </button>
+        @if (form.IdSeleccion != 0)
+        {
+            <button class="btn btn-secondary ms-1" @onclick="Limpiar">Cancelar</button>
+        }
+    </div>
+</div>
+
+<table class="table">
+    <thead><tr><th>#</th><th>Nombre</th><th>Confederación</th><th>Grupo</th><th></th></tr></thead>
+    <tbody>
+        @foreach (var s in selecciones)
+        {
+            <tr>
+                <td>@s.IdSeleccion</td>
+                <td>@s.Nombre</td>
+                <td>@s.Confederacion</td>
+                <td>@s.Grupo</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" @onclick="() => Editar(s)" disabled="@(!Sesion.EstaAutenticado)">Editar</button>
+                    <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(s.IdSeleccion)" disabled="@(!Sesion.EstaAutenticado)">Eliminar</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<SeleccionDto> selecciones = new();
+    private SeleccionEntityDto form = new();
+    private int idGrupo = 0;
+    private string mensaje = "";
+    private string tipoMensaje = "";
+
+    protected override async Task OnInitializedAsync() => await Cargar();
+
+    private async Task Cargar()
+    {
+        try { selecciones = await Api.ListarSelecciones(); }
+        catch (Exception ex) { mensaje = $"Error: {ex.Message}"; tipoMensaje = "danger"; }
+    }
+
+    private async Task Guardar()
+    {
+        form.Grupo = idGrupo > 0 ? new GrupoRefDto { IdGrupo = idGrupo } : null;
+        var (ok, error) = form.IdSeleccion == 0
+            ? await Api.CrearSeleccion(form)
+            : await Api.ActualizarSeleccion(form);
+
+        mensaje = ok ? "Guardado correctamente." : $"Error: {error}";
+        tipoMensaje = ok ? "success" : "danger";
+        if (ok) { Limpiar(); await Cargar(); }
+    }
+
+    private void Editar(SeleccionDto s)
+    {
+        form = new SeleccionEntityDto { IdSeleccion = s.IdSeleccion, Nombre = s.Nombre, Confederacion = s.Confederacion };
+        idGrupo = 0;
+    }
+
+    private async Task Eliminar(int id)
+    {
+        var (ok, error) = await Api.EliminarSeleccion(id);
+        mensaje = ok ? "Eliminado." : $"Error: {error}";
+        tipoMensaje = ok ? "success" : "danger";
+        if (ok) await Cargar();
+    }
+
+    private void Limpiar() { form = new(); idGrupo = 0; }
+}

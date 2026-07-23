@@ -2,12 +2,14 @@
 @rendermode InteractiveServer
 @using FrontendAdministrativo.Models
 @inject FrontendAdministrativo.Services.EstadisticasApiService Api
+@inject FrontendAdministrativo.Services.SesionAdmin Sesion
 
 <PageTitle>Gestión de Partidos</PageTitle>
+
 <div class="admin-header">
     <div class="admin-header-title">
         <h1>Gestión de Partidos</h1>
-        <p>Consulta los encuentros del Mundial y su fase.</p>
+        <p>Consulta, crea y edita los encuentros del Mundial.</p>
     </div>
     <div class="admin-header-stats">
         <div class="admin-stat">
@@ -18,75 +20,186 @@
             <span class="admin-stat-num">@partidos.Count(p => p.Fase == "Grupo")</span>
             <span class="admin-stat-label">Fase de Grupos</span>
         </div>
-        <div class="admin-stat">
-            <span class="admin-stat-num">@partidos.Count(p => p.Fase == "Final")</span>
-            <span class="admin-stat-label">Final</span>
-        </div>
     </div>
 </div>
 
-@if (!string.IsNullOrWhiteSpace(mensaje))
+@if (!Sesion.EstaAutenticado)
 {
-    <div class="alert alert-@tipoMensaje mb-3" role="alert">@mensaje</div>
+    <div class="alert alert-warning">
+        Modo consulta. Inicia sesión como administrador para crear, editar o eliminar partidos.
+    </div>
 }
 
-@if (cargando)
+@if (!string.IsNullOrWhiteSpace(mensaje))
 {
-    <p>Cargando partidos...</p>
+    <div class="alert alert-@tipoMensaje">@mensaje</div>
 }
-else if (partidos.Count == 0)
+
+@if (Sesion.EstaAutenticado)
 {
-    <p>No hay partidos para mostrar.</p>
+    <div class="panel-card mb-4" style="max-width:800px;">
+        <h4>@(form.IdPartido == 0 ? "Nuevo partido" : $"Editando partido #{form.IdPartido}")</h4>
+        <div class="row g-2">
+            <div class="col-md-4">
+                <label class="form-label">Selección Local</label>
+                <select class="form-select" @bind="idLocal">
+                    <option value="0">-- Selecciona --</option>
+                    @foreach (var s in selecciones)
+                    {
+                        <option value="@s.IdSeleccion">@s.Nombre</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Selección Visitante</label>
+                <select class="form-select" @bind="idVisitante">
+                    <option value="0">-- Selecciona --</option>
+                    @foreach (var s in selecciones)
+                    {
+                        <option value="@s.IdSeleccion">@s.Nombre</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Sede</label>
+                <select class="form-select" @bind="idSede">
+                    <option value="0">-- Selecciona --</option>
+                    @foreach (var s in sedes)
+                    {
+                        <option value="@s.IdSede">@s.Estadio (@s.Ciudad)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fecha</label>
+                <input type="datetime-local" class="form-control" @bind="form.Fecha" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fase</label>
+                <select class="form-select" @bind="form.Fase">
+                    <option value="Grupo">Grupo</option>
+                    <option value="Octavos">Octavos</option>
+                    <option value="Cuartos">Cuartos</option>
+                    <option value="Semifinal">Semifinal</option>
+                    <option value="Final">Final</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end gap-2">
+                <button class="btn btn-primary" @onclick="Guardar">
+                    @(form.IdPartido == 0 ? "Crear" : "Actualizar")
+                </button>
+                @if (form.IdPartido != 0)
+                {
+                    <button class="btn btn-secondary" @onclick="Limpiar">Cancelar</button>
+                }
+            </div>
+        </div>
+    </div>
 }
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Local</th>
-                <th>Visitante</th>
-                <th>Sede</th>
-                <th>Fecha</th>
-                <th>Fase</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var p in partidos)
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Local</th>
+            <th>Visitante</th>
+            <th>Sede</th>
+            <th>Fecha</th>
+            <th>Fase</th>
+            @if (Sesion.EstaAutenticado)
             {
-                <tr>
-                    <td>@p.IdPartido</td>
-                    <td>@p.SeleccionLocal</td>
-                    <td>@p.SeleccionVisitante</td>
-                    <td>@p.Sede</td>
-                    <td>@p.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
-                    <td>@p.Fase</td>
-                </tr>
+                <th>Acciones</th>
             }
-        </tbody>
-    </table>
-}
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in partidos)
+        {
+            <tr>
+                <td>@p.IdPartido</td>
+                <td>@p.SeleccionLocal</td>
+                <td>@p.SeleccionVisitante</td>
+                <td>@p.Sede</td>
+                <td>@p.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@p.Fase</td>
+                @if (Sesion.EstaAutenticado)
+                {
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => Editar(p)">Editar</button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(p.IdPartido)">Eliminar</button>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
 
 @code {
     private List<PartidoDto> partidos = new();
-    private bool cargando = true;
-    private string mensaje = "";
-    private string tipoMensaje = "";
+    private List<SeleccionDto> selecciones = new();
+    private List<SedeDto> sedes = new();
 
-    protected override async Task OnInitializedAsync()
+    private PartidoEntityDto form = new() { Fecha = DateTime.Now };
+    private int idLocal = 0, idVisitante = 0, idSede = 0;
+
+    private string mensaje = "", tipoMensaje = "";
+
+    protected override async Task OnInitializedAsync() => await CargarTodo();
+
+    private async Task CargarTodo()
     {
         try
         {
             partidos = await Api.ListarPartidos();
+            selecciones = await Api.ListarSelecciones();
+            sedes = await Api.ListarSedes();
         }
-        catch (Exception ex)
+        catch (Exception ex) { mensaje = $"Error: {ex.Message}"; tipoMensaje = "danger"; }
+    }
+
+    private async Task Guardar()
+    {
+        if (idLocal == 0 || idVisitante == 0 || idSede == 0)
         {
-            mensaje = $"No se pudo conectar con el backend: {ex.Message}";
-            tipoMensaje = "danger";
+            mensaje = "Debes seleccionar local, visitante y sede."; tipoMensaje = "warning"; return;
         }
-        finally
+        if (idLocal == idVisitante)
         {
-            cargando = false;
+            mensaje = "Local y visitante no pueden ser el mismo equipo."; tipoMensaje = "warning"; return;
         }
+
+        form.SeleccionLocal = new SeleccionRefDto { IdSeleccion = idLocal };
+        form.SeleccionVisitante = new SeleccionRefDto { IdSeleccion = idVisitante };
+        form.Sede = new SedeRefDto { IdSede = idSede };
+
+        var (ok, error) = form.IdPartido == 0
+            ? await Api.CrearPartido(form)
+            : await Api.ActualizarPartido(form);
+
+        mensaje = ok ? "Guardado correctamente." : $"Error: {error}";
+        tipoMensaje = ok ? "success" : "danger";
+        if (ok) { Limpiar(); await CargarTodo(); }
+    }
+
+    private void Editar(PartidoDto p)
+    {
+        form = new PartidoEntityDto { IdPartido = p.IdPartido, Fecha = p.Fecha, Fase = p.Fase };
+        idLocal = selecciones.FirstOrDefault(s => s.Nombre == p.SeleccionLocal)?.IdSeleccion ?? 0;
+        idVisitante = selecciones.FirstOrDefault(s => s.Nombre == p.SeleccionVisitante)?.IdSeleccion ?? 0;
+        idSede = sedes.FirstOrDefault(s => s.Estadio == p.Sede || s.Ciudad == p.Sede)?.IdSede ?? 0;
+    }
+
+    private async Task Eliminar(int id)
+    {
+        var (ok, error) = await Api.EliminarPartido(id);
+        mensaje = ok ? "Partido eliminado." : $"Error: {error}";
+        tipoMensaje = ok ? "success" : "danger";
+        if (ok) await CargarTodo();
+    }
+
+    private void Limpiar()
+    {
+        form = new PartidoEntityDto { Fecha = DateTime.Now };
+        idLocal = idVisitante = idSede = 0;
     }
 }

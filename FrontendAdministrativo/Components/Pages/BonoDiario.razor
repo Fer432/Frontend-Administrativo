@@ -1,0 +1,60 @@
+﻿@page "/bono-diario"
+@rendermode InteractiveServer
+@using FrontendAdministrativo.Models
+@inject FrontendAdministrativo.Services.UtnGolCoinApiService Api
+
+<PageTitle>Bono Diario</PageTitle>
+
+<div class="admin-header">
+    <div class="admin-header-title">
+        <h1>Bono Diario</h1>
+        <p>Otorga el bono a los usuarios en bancarrota.</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(mensaje))
+{
+    <div class="alert alert-@tipoMensaje">@mensaje</div>
+}
+
+<button class="btn btn-success mb-3" @onclick="Ejecutar" disabled="@procesando">
+    @(procesando ? "Ejecutando..." : "Ejecutar bono diario")
+</button>
+
+@if (resultado is not null)
+{
+    <p><strong>@resultado.CantidadBeneficiados</strong> usuario(s) beneficiados el @resultado.Fecha.ToString("dd/MM/yyyy").</p>
+
+    @if (resultado.Beneficiarios.Count > 0)
+    {
+        <table class="table">
+            <thead><tr><th>Usuario</th><th>Saldo nuevo</th></tr></thead>
+            <tbody>
+                @foreach (var b in resultado.Beneficiarios)
+                {
+                    <tr><td>@b.UsuarioId</td><td>@b.SaldoNuevo.ToString("0.00")</td></tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private EjecutarBonoDiarioResponseDto? resultado;
+    private bool procesando = false;
+    private string mensaje = "";
+    private string tipoMensaje = "";
+
+    private async Task Ejecutar()
+    {
+        mensaje = ""; procesando = true;
+        try
+        {
+            resultado = await Api.EjecutarBonoDiario();
+            if (resultado is null) { mensaje = "No se pudo ejecutar el bono."; tipoMensaje = "danger"; }
+            else { mensaje = "Bono ejecutado correctamente."; tipoMensaje = "success"; }
+        }
+        catch (Exception ex) { mensaje = $"Error: {ex.Message}"; tipoMensaje = "danger"; }
+        finally { procesando = false; }
+    }
+}
