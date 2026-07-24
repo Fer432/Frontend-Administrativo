@@ -59,6 +59,7 @@ public class EstadisticasApiService
 
     public async Task<(bool ok, string? error)> EliminarSeleccion(int id)
     {
+   
         Autenticar();
         var resp = await _http.DeleteAsync($"selecciones/{id}");
         return resp.IsSuccessStatusCode ? (true, null) : (false, await resp.Content.ReadAsStringAsync());
@@ -105,4 +106,6 @@ public class EstadisticasApiService
         var resp = await _http.PostAsJsonAsync("resultados", resultado);
         return resp.IsSuccessStatusCode;
     }
+    public async Task<List<GrupoDto>> ListarGrupos()
+    => await _http.GetFromJsonAsync<List<GrupoDto>>("grupos") ?? new();
 }

@@ -22,3 +22,8 @@ public class SeleccionEntityDto
     public string Confederacion { get; set; } = string.Empty;
     public GrupoRefDto? Grupo { get; set; }
 }
+public class GrupoDto
+{
+    public int IdGrupo { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+}

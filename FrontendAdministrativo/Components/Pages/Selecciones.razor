@@ -25,10 +25,22 @@
     <div class="alert alert-@tipoMensaje">@mensaje</div>
 }
 
-<div class="row mb-4" style="max-width:700px;">
-    <div class="col"><input class="form-control" placeholder="Nombre" @bind="form.Nombre" /></div>
-    <div class="col"><input class="form-control" placeholder="Confederación" @bind="form.Confederacion" /></div>
-    <div class="col"><input type="number" class="form-control" placeholder="ID Grupo" @bind="idGrupo" /></div>
+<div class="row mb-4 g-2" style="max-width:900px;">
+    <div class="col">
+        <input class="form-control" placeholder="Nombre *" @bind="form.Nombre" />
+    </div>
+    <div class="col">
+        <input class="form-control" placeholder="Confederación *" @bind="form.Confederacion" />
+    </div>
+    <div class="col">
+        <select class="form-select" @bind="idGrupo">
+            <option value="0">-- Grupo --</option>
+            @foreach (var g in grupos)
+            {
+                <option value="@g.IdGrupo">Grupo @g.Nombre</option>
+            }
+        </select>
+    </div>
     <div class="col-auto">
         <button class="btn btn-primary" @onclick="Guardar" disabled="@(!Sesion.EstaAutenticado)">
             @(form.IdSeleccion == 0 ? "Crear" : "Actualizar")
@@ -61,6 +73,7 @@
 
 @code {
     private List<SeleccionDto> selecciones = new();
+    private List<GrupoDto> grupos = new();
     private SeleccionEntityDto form = new();
     private int idGrupo = 0;
     private string mensaje = "";
@@ -70,13 +83,25 @@
 
     private async Task Cargar()
     {
-        try { selecciones = await Api.ListarSelecciones(); }
+        try
+        {
+            selecciones = await Api.ListarSelecciones();
+            grupos = await Api.ListarGrupos();
+        }
         catch (Exception ex) { mensaje = $"Error: {ex.Message}"; tipoMensaje = "danger"; }
     }
 
     private async Task Guardar()
     {
+        if (string.IsNullOrWhiteSpace(form.Nombre) || string.IsNullOrWhiteSpace(form.Confederacion))
+        {
+            mensaje = "Nombre y Confederación son obligatorios.";
+            tipoMensaje = "warning";
+            return;
+        }
+
         form.Grupo = idGrupo > 0 ? new GrupoRefDto { IdGrupo = idGrupo } : null;
+
         var (ok, error) = form.IdSeleccion == 0
             ? await Api.CrearSeleccion(form)
             : await Api.ActualizarSeleccion(form);
@@ -88,8 +113,16 @@
 
     private void Editar(SeleccionDto s)
     {
-        form = new SeleccionEntityDto { IdSeleccion = s.IdSeleccion, Nombre = s.Nombre, Confederacion = s.Confederacion };
-        idGrupo = 0;
+        form = new SeleccionEntityDto
+        {
+            IdSeleccion = s.IdSeleccion,
+            Nombre = s.Nombre,
+            Confederacion = s.Confederacion
+        };
+
+        // Preselecciona el grupo actual para no borrarlo al actualizar
+        var g = grupos.FirstOrDefault(x => s.Grupo != null && s.Grupo.Trim().EndsWith(x.Nombre));
+        idGrupo = g?.IdGrupo ?? 0;
     }
 
     private async Task Eliminar(int id)
